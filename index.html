@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond 2047 - The Future Forge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- Main Game Container -->
+    <div id="game-container" class="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-2xl w-full text-center border border-gray-700">
+        <h1 class="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+            Beyond 2047
+        </h1>
+        <p class="text-lg text-gray-400 mb-8">
+            Predict the year these futuristic space events will happen.
+        </p>
+
+        <!-- Scenario Card -->
+        <div id="scenario-card" class="bg-gray-900 rounded-xl p-6 mb-6">
+            <div class="text-6xl mb-4" id="scenario-emoji">🚀</div>
+            <h2 id="scenario-title" class="text-3xl font-bold mb-2"></h2>
+            <p id="scenario-description" class="text-gray-300 mb-6"></p>
+        </div>
+
+        <!-- Prediction Input and Button -->
+        <div id="prediction-input-group" class="mb-6">
+            <label for="prediction-input" class="text-gray-300 block mb-2">Your Prediction Year:</label>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                <input type="number" id="prediction-input" placeholder="e.g., 2075" min="2025" max="2200"
+                       class="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors">
+                <button id="lock-btn" class="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                    Lock in Prediction
+                </button>
+            </div>
+        </div>
+
+        <!-- Immediate Result Section (Initially Hidden) -->
+        <div id="immediate-result" class="mt-4 p-4 rounded-lg bg-gray-900 border border-gray-700 hidden">
+            <p class="text-lg font-semibold mb-2">Your Result:</p>
+            <p id="result-message" class="text-gray-300 mb-2"></p>
+            <p id="result-score" class="text-2xl font-bold"></p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between items-center mt-6">
+            <button id="prev-btn" class="bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-full transition-colors disabled:opacity-50" disabled>
+                Previous
+            </button>
+            <div id="scenario-counter" class="text-gray-400 text-sm"></div>
+            <button id="next-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-full transition-colors disabled:opacity-50" disabled>
+                Next Scenario
+            </button>
+        </div>
+
+        <!-- Final Results Section (Initially Hidden) -->
+        <div id="final-results-section" class="mt-8 text-left hidden">
+            <h2 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-500 mb-4">
+                Final Score!
+            </h2>
+            <p id="final-score" class="text-2xl font-semibold mb-4"></p>
+            <div id="final-results-list"></div>
+            <button id="restart-btn" class="w-full mt-8 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-full transition-colors">
+                Restart Game
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts (Initially Hidden) -->
+    <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center hidden">
+        <div class="bg-gray-800 p-8 rounded-lg shadow-xl text-center max-w-sm w-full border border-gray-700">
+            <p id="modal-message" class="text-white text-lg mb-4"></p>
+            <button id="modal-close-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game data: scenarios and their "expert opinions"
+        const scenarios = [
+            {
+                title: "Orbital Solar Farms",
+                description: "The first large-scale, operational solar power satellite begins beaming gigawatts of clean energy directly to Earth's power grid.",
+                emoji: "💡",
+                consensus: 2065,
+                optimistic: 2055,
+                pessimistic: 2080
+            },
+            {
+                title: "Commercial Asteroid Mining",
+                description: "A fully robotic mission successfully extracts valuable minerals from an asteroid and returns them to a processing facility in Earth orbit.",
+                emoji: "⛏️",
+                consensus: 2075,
+                optimistic: 2068,
+                pessimistic: 2105
+            },
+            {
+                title: "Lunar Far Side Telescope",
+                description: "A powerful optical telescope, constructed on the far side of the Moon, begins operations to study the cosmos without atmospheric interference.",
+                emoji: "🔭",
+                consensus: 2058,
+                optimistic: 2050,
+                pessimistic: 2070
+            },
+            {
+                title: "First Step in Martian Terraforming",
+                description: "Scientists achieve the first verifiable step in terraforming Mars by deploying a process to release greenhouse gases, starting the long-term process of warming the planet.",
+                emoji: "🌱",
+                consensus: 2120,
+                optimistic: 2100,
+                pessimistic: 2150
+            },
+            {
+                title: "Interplanetary Comms Relay",
+                description: "A network of communication satellites is established, enabling near-real-time messaging between Earth and a human outpost on a moon of Jupiter or Saturn.",
+                emoji: "🛰️",
+                consensus: 2085,
+                optimistic: 2070,
+                pessimistic: 2110
+            },
+            {
+                title: "Interstellar Probe Launch",
+                description: "A probe with advanced propulsion is launched on an ambitious journey to a nearby star system, carrying humanity's message to the cosmos.",
+                emoji: "🚀",
+                consensus: 2095,
+                optimistic: 2085,
+                pessimistic: 2130
+            }
+        ];
+
+        // Global state
+        let currentScenarioIndex = 0;
+        const predictions = [];
+        let totalScore = 0;
+
+        // DOM elements
+        const scenarioTitleEl = document.getElementById('scenario-title');
+        const scenarioDescriptionEl = document.getElementById('scenario-description');
+        const scenarioEmojiEl = document.getElementById('scenario-emoji');
+        const scenarioCounterEl = document.getElementById('scenario-counter');
+        const predictionInputEl = document.getElementById('prediction-input');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const lockBtn = document.getElementById('lock-btn');
+        const immediateResultEl = document.getElementById('immediate-result');
+        const resultMessageEl = document.getElementById('result-message');
+        const resultScoreEl = document.getElementById('result-score');
+        const finalResultsSection = document.getElementById('final-results-section');
+        const finalResultsListEl = document.getElementById('final-results-list');
+        const finalScoreEl = document.getElementById('final-score');
+        const gameContainerEl = document.getElementById('game-container');
+        const restartBtn = document.getElementById('restart-btn');
+        const modalEl = document.getElementById('modal');
+        const modalMessageEl = document.getElementById('modal-message');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+
+        /**
+         * Displays a custom alert message using a modal.
+         * @param {string} message - The message to display.
+         */
+        function showAlert(message) {
+            modalMessageEl.textContent = message;
+            modalEl.classList.remove('hidden');
+        }
+
+        /**
+         * Calculates the score for a single prediction.
+         * @param {number} predictedYear - The year the user predicted.
+         * @param {number} consensusYear - The expert consensus year.
+         * @returns {object} - An object containing the points and a message.
+         */
+        function calculateScore(predictedYear, consensusYear) {
+            const difference = Math.abs(predictedYear - consensusYear);
+            let points = 0;
+            let message = '';
+
+            if (difference === 0) {
+                points = 10;
+                message = "🎯 Perfect score! You nailed the consensus year.";
+            } else if (difference <= 5) {
+                points = 7;
+                message = `Excellent! You were within ${difference} years.`;
+            } else if (difference <= 10) {
+                points = 5;
+                message = `Good job, you were within ${difference} years.`;
+            } else if (difference <= 20) {
+                points = 2;
+                message = `Not bad, you were within ${difference} years.`;
+            } else {
+                points = 0;
+                message = `That's a wide guess, but the future is full of surprises!`;
+            }
+
+            return { points, message };
+        }
+
+        /**
+         * Renders the current scenario details to the page.
+         */
+        function renderScenario() {
+            if (currentScenarioIndex >= scenarios.length) {
+                showFinalResults();
+                return;
+            }
+
+            const scenario = scenarios[currentScenarioIndex];
+            scenarioTitleEl.textContent = scenario.title;
+            scenarioDescriptionEl.textContent = scenario.description;
+            scenarioEmojiEl.textContent = scenario.emoji;
+            scenarioCounterEl.textContent = `${currentScenarioIndex + 1} / ${scenarios.length}`;
+
+            // Reset UI for new scenario
+            predictionInputEl.value = '';
+            predictionInputEl.disabled = false;
+            lockBtn.classList.remove('hidden');
+            lockBtn.disabled = false;
+            immediateResultEl.classList.add('hidden');
+            prevBtn.disabled = currentScenarioIndex === 0;
+            nextBtn.disabled = true;
+        }
+
+        /**
+         * Shows the immediate result for the current prediction.
+         */
+        function showImmediateResult() {
+            const year = parseInt(predictionInputEl.value);
+            const scenario = scenarios[currentScenarioIndex];
+
+            if (!year || year < 2025 || year > 2200) {
+                showAlert("Please enter a valid year between 2025 and 2200.");
+                return;
+            }
+
+            const { points, message } = calculateScore(year, scenario.consensus);
+            totalScore += points;
+            predictions[currentScenarioIndex] = {
+                ...scenario,
+                predictedYear: year,
+                points,
+                message
+            };
+
+            // Display the result
+            resultMessageEl.innerHTML = `<span class="font-bold">Expert Consensus:</span> ${scenario.consensus} (${message})`;
+            resultScoreEl.textContent = `${points} Points`;
+            resultScoreEl.className = `text-2xl font-bold ${points > 0 ? 'text-green-400' : 'text-red-400'}`;
+            immediateResultEl.classList.remove('hidden');
+
+            // Disable input and lock button
+            predictionInputEl.disabled = true;
+            lockBtn.classList.add('hidden');
+            nextBtn.disabled = false;
+        }
+
+        /**
+         * Renders the final summary of all predictions.
+         */
+        function showFinalResults() {
+            gameContainerEl.classList.add('hidden');
+            finalResultsSection.classList.remove('hidden');
+            let resultsHtml = '';
+
+            predictions.forEach(p => {
+                resultsHtml += `
+                    <div class="bg-gray-900 rounded-lg p-4 mb-4 border border-gray-700">
+                        <h3 class="text-xl font-semibold mb-2">${p.emoji} ${p.title}</h3>
+                        <p class="text-gray-400 mb-2">
+                            <span class="font-bold">Your Prediction:</span> ${p.predictedYear}
+                        </p>
+                        <p class="text-gray-400 mb-2">
+                            <span class="font-bold">Expert Consensus:</span> ${p.consensus}
+                            <span class="text-sm italic text-gray-500">(Optimistic: ${p.optimistic}, Pessimistic: ${p.pessimistic})</span>
+                        </p>
+                        <p class="text-lg font-bold ${p.points > 0 ? 'text-green-400' : 'text-red-400'}">
+                            Score: ${p.points} points
+                        </p>
+                        <p class="text-gray-300 mt-2">${p.message}</p>
+                    </div>
+                `;
+            });
+            finalResultsListEl.innerHTML = resultsHtml;
+            finalScoreEl.textContent = `Total Score: ${totalScore} / ${scenarios.length * 10}`;
+        }
+
+        // Event listeners
+        lockBtn.addEventListener('click', showImmediateResult);
+        nextBtn.addEventListener('click', () => {
+            currentScenarioIndex++;
+            renderScenario();
+        });
+        prevBtn.addEventListener('click', () => {
+            currentScenarioIndex--;
+            renderScenario();
+        });
+        restartBtn.addEventListener('click', () => {
+            currentScenarioIndex = 0;
+            predictions.length = 0;
+            totalScore = 0;
+            renderScenario();
+            gameContainerEl.classList.remove('hidden');
+            finalResultsSection.classList.add('hidden');
+        });
+        modalCloseBtn.addEventListener('click', () => {
+            modalEl.classList.add('hidden');
+        });
+
+        // Initial render
+        renderScenario();
+    </script>
+
+</body>
+</html>
